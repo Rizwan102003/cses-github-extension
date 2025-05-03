@@ -1,30 +1,44 @@
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url.includes('cses.fi/problemset/result')) {
-      chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        func: () => {
-          chrome.runtime.sendMessage({ action: "getSubmissionData" }, async (data) => {
-            const { title, code } = data;
-            const repo = await chrome.storage.sync.get("repo");
-            const token = await chrome.storage.sync.get("token");
-  
-            const filePath = `cses/${title.replace(/\s+/g, '_')}.cpp`;
-            const content = btoa(unescape(encodeURIComponent(code)));
-            const body = JSON.stringify({
-              message: `Add solution for ${title}`,
-              content: content
-            });
-  
-            fetch(`https://api.github.com/repos/${repo.repo}/contents/${filePath}`, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `token ${token.token}`,
-                'Content-Type': 'application/json'
-              },
-              body: body
-            });
-          });
-        }
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "submission") {
+    console.log("📨 Received submission from content script", message.data);
+
+    const { title, code } = message.data;
+
+    chrome.storage.sync.get(["repo", "token"], ({ repo, token }) => {
+      if (!repo || !token) {
+        console.error("❌ Missing GitHub repo or token");
+        return;
+      }
+
+      const path = `cses/${title}.cpp`;
+      const commitMsg = `Add solution for ${title}`;
+      const content = btoa(unescape(encodeURIComponent(code)));
+
+      const body = JSON.stringify({
+        message: commitMsg,
+        content: content
       });
-    }
-  });
+
+      console.log(`📤 Sending commit to https://api.github.com/repos/${repo}/contents/${path}`);
+
+      fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: body
+      })
+        .then(res => res.json())
+        .then(json => {
+          console.log("✅ GitHub response:", json);
+          if (json.content) {
+            console.log("🎉 Commit succeeded!");
+          } else {
+            console.warn("⚠️ Commit failed or file exists:", json);
+          }
+        })
+        .catch(err => console.error("🔥 GitHub error:", err));
+    });
+  }
+});

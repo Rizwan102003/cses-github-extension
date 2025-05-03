@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html>
-  <head><title>CSES GitHub</title></head>
+  <head>
+    <title>GitHub Config</title>
+  </head>
   <body>
-    <h2>Auto Commit</h2>
-    <button id="openOptions">Open Settings</button>
+    <h3>CSES GitHub Committer</h3>
+    <label>Repo (username/repo):</label><br />
+    <input id="repo" /><br />
+    <label>GitHub Token:</label><br />
+    <input id="token" type="password" /><br />
+    <button id="save">Save</button>
+
     <script src="popup.js"></script>
   </body>
 </html>
