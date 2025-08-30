@@ -1,4 +1,4 @@
-# CSES-Github Extension
+# CSES-Github Extension Commiter
 
 The **CSES-Github Extension** is a browser extension designed to enhance your experience with the **CSES Problem Set** on [CSES](https://cses.fi/problemset/). It integrates directly with GitHub to streamline the process of submitting solutions, checking the correctness of answers, and automatically managing your submissions.
 
